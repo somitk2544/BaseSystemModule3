@@ -16,7 +16,9 @@ class UserInterface(QWidget):
       self.focusGoal = 3 
       self.goalPosition = -1
       self.goalSingleStation = -1
-      self.goalMultiStation  = []
+      self.goalMultiStation  = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
+      self.goalMultiStationSize = 1
+      self.goalMultiStationError = False
 
       self.background1 = Text(self, 0, '', 0, 0)
       self.background1.setSize(800, 750)
@@ -287,26 +289,54 @@ class UserInterface(QWidget):
                   self.goalSingleStation = -1
       # print(self.goalSingleStation)
 
-      gmsi = self.goalMultiStationInput[0].getInput()
-      if(self.focusGoal == 3):
-         if(gmsi.isdigit()):
-            if(int(gmsi) < 1 or int(gmsi) > 10):
-               self.log.error()
-               self.log.setText("INPUT STATION # BETWEEN 1-10")
-               self.goalMultiStation = -1
-            else:
-               self.goalMultiStation = gmsi
-         else:
-            if(gmsi != ''):
-               if(gmsi[0] == '-'):
+      for i in range(self.goalMultiStationSize):
+         gmsi = self.goalMultiStationInput[i].getInput()
+         if(self.focusGoal == 3):
+            if(gmsi.isdigit()):
+               if(int(gmsi) < 1 or int(gmsi) > 10):
                   self.log.error()
-                  self.log.setText("STATION #  CANNOT BE NEGATIVE")
-                  self.goalMultiStation = -1
+                  self.log.setText("INPUT STATION # BETWEEN 1-10")
+                  self.goalMultiStationError = True
+                  self.goalMultiStation[i] = -1
                else:
-                  self.log.error()
-                  self.log.setText("STATION # NEED TO BE AN INTEGER")
-                  self.goalMultiStation = -1
-         # print(self.goalMultiStation)
+                  self.goalMultiStationError = False
+                  self.goalMultiStation[i] = int(gmsi) 
+            else:
+               if(gmsi != ''):
+                  if(gmsi[0] == '-'):
+                     self.log.error()
+                     self.log.setText("STATION #  CANNOT BE NEGATIVE")
+                     self.goalMultiStationError = True
+                     self.goalMultiStation[i] = -1
+                  else:
+                     self.log.error()
+                     self.log.setText("STATION # NEED TO BE AN INTEGER")
+                     self.goalMultiStationError = True
+                     self.goalMultiStation[i] = -1
+               else:
+                  if(i != self.goalMultiStationSize - 1):
+                     self.goalMultiStation[i] = -1
+
+      
+      for i in range(self.goalMultiStationSize):
+         if(self.goalMultiStation[i] != -1):
+            self.goalMultiStationInput[i+1].enable()
+            self.goalMultiStationInput[i+1].focus()
+            self.goalMultiStationSize = i+2
+         else:
+            self.goalMultiStationInput[i+1].disable()
+            self.goalMultiStationSize = i+1
+
+      for i in range(15):
+         if(self.goalMultiStation[i] == -1):
+            self.goalMultiStationSize = i+1
+            break
+
+      for i in range(self.goalMultiStationSize, 15):
+         self.goalMultiStationInput[i].disable()
+
+      # print(self.goalMultiStation, self.goalMultiStationSize)
+
 
 
 
@@ -322,7 +352,7 @@ class UserInterface(QWidget):
             if(self.goalSingleStation != -1 and gssi != ''):
                self.run.ready = True
          elif(self.focusGoal == 3):
-            if(self.goalMultiStation != -1 and gmsi != ''):
+            if(self.goalMultiStationError == False and self.goalMultiStationSize > 1):
                self.run.ready = True
       else:
          self.run.ready = False
@@ -361,7 +391,7 @@ class UserInterface(QWidget):
             elif(self.focusGoal == 2):
                print("Goal Single Station :", self.goalSingleStation)
             elif(self.focusGoal == 3):
-               print("Goal Multi Station :", self.goalMultiStation)
+               print("Goal Multi Station :", self.goalMultiStation[:self.goalMultiStationSize-1])
 
             print("Max Speed : ", self.maxSpeed)
             print()
