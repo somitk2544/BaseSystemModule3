@@ -318,7 +318,7 @@ class UserInterface(QWidget):
                      self.goalMultiStation[i] = -1
 
       
-      for i in range(self.goalMultiStationSize):
+      for i in range(min(self.goalMultiStationSize, 14)):
          if(self.goalMultiStation[i] != -1):
             self.goalMultiStationInput[i+1].enable()
             self.goalMultiStationInput[i+1].focus()
@@ -335,7 +335,9 @@ class UserInterface(QWidget):
       for i in range(self.goalMultiStationSize, 15):
          self.goalMultiStationInput[i].disable()
 
-      # print(self.goalMultiStation, self.goalMultiStationSize)
+      self.goalMultiStationInput[14].disable()
+
+      print(self.goalMultiStation, self.goalMultiStationSize)
 
 
 
