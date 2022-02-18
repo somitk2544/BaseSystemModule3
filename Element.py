@@ -43,6 +43,12 @@ class Text():
    def focus(self):
       self.object.setStyleSheet("color:white")
 
+   def error(self):
+      self.object.setStyleSheet("color:red")
+   
+   def normal(self):
+      self.object.setStyleSheet("color:rgb(48,  55,  60 )")
+
 #-------------------------------------------------------#
 
 class Button():
@@ -52,7 +58,9 @@ class Button():
       self.object.setFont(QFont("Arial", fontSize))
       self.object.move(posX, posY)
       self.object.clicked.connect(self.buttonClick)
+      self.style = ""
       self.pressed = False
+      self.ready = False
       
    def setPosition(self, posX, posY):
       self.object.move(posX, posY)
@@ -61,12 +69,19 @@ class Button():
       self.object.resize(sizeX, sizeY)
 
    def setStyle(self, style):
+      self.style = style
       self.object.setStyleSheet(style)
 
    def buttonClick(self):
-      # self.object.setText("Clicked!!")
-      self.pressed = not self.pressed
-      print(self.pressed)
+      self.pressed = True
+      # print(self.pressed)
+
+   def disable(self):
+      self.object.setStyleSheet("color:white; background-color:rgb(200,200,200); border-radius: 10; border: 4px solid rgb(200,200,200)")
+   
+   def enable(self):
+      self.object.setStyleSheet(self.style)
+
 
 #-------------------------------------------------------#
 
@@ -84,9 +99,9 @@ class InputBox():
       self.object = QLineEdit(window)
       self.object.setFont(QFont("Arial", fontSize))
       self.object.move(posX, posY)
-      self.object.returnPressed.connect(self.pressEnter)
+      # self.object.returnPressed.connect(self.pressEnter)
       self.object.setAlignment(Qt.AlignCenter)
-      self.submit = False
+      # self.submit = False
       self.enable()
       self.unfocus()
       self.focused = False
@@ -98,8 +113,8 @@ class InputBox():
    def setSize(self, sizeX, sizeY):
       self.object.resize(sizeX, sizeY)
 
-   def pressEnter(self):
-      self.submit = True
+   # def pressEnter(self):
+   #    self.submit = True
       # print(self.object.text())
       # self.object.setText("")
    
@@ -154,14 +169,24 @@ class Station:
          if(self.substation[i].pressed):
             self.substation[i].pressed = False
             if(i not in self.selected):
-               if(len(self.selected) < 10):
+               # if(len(self.selected) < 10):
+               if(len(self.selected) < 3):
                   self.selected.append(i)
                   self.selected.sort()
                   self.substation[i].setStyle("background-color: black ; border-radius: 7; border: 2px solid black")
-                  print(self.selected)
+                  # print(self.selected)
+                  stationString = ""
+                  for s in self.selected:
+                     stationString = stationString + str(s*5) + ' '
+                  print(stationString)
+
             else:
                self.selected.remove(i)
                self.substation[i].setStyle("background-color: white ; border-radius: 7; border: 2px solid rgb(252, 3, 48)")
-               print(self.selected)
+               # print(self.selected)
+               stationString = ""
+               for s in self.selected:
+                  stationString = stationString + str(s*5) + ' '
+               print(stationString)
 
 #-------------------------------------------------------#

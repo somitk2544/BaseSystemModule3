@@ -11,10 +11,11 @@ class UserInterface(QWidget):
       self.windowInit()
 
       self.angle = 0
-      self.maxSpeed = 0
+      self.substation = []
+      self.maxSpeed = -1
       self.focusGoal = 3 
-      self.goalPosition = 0
-      self.goalSingleStation = 1
+      self.goalPosition = -1
+      self.goalSingleStation = -1
       self.goalMultiStation  = []
 
       self.background1 = Text(self, 0, '', 0, 0)
@@ -28,15 +29,20 @@ class UserInterface(QWidget):
       self.title = Text(self, 28, "         BASE SYSTEM         ", 50, 30)
       self.title.setStyle("color: white; border-radius: 25; background-color: {}; padding: 10px".format(self.color.darkgray))
 
-      self.log = Text(self, 16, "   PLEASE SELECT 10 SUB-STATIONS   ", 36, 140)
-      self.log.setSize(400, 40)
-      self.log.setStyle("color:{}; border-radius: 10; border: 3px solid rgb(0, 0, 150); background-color: rgba(255, 255, 255, 200); padding :5px".format(self.color.darkgray))
       
+      self.logBorder = Text(self, 0, '', 36, 135)
+      self.logBorder.setSize(400, 42)
+      self.logBorder.setStyle("border-radius: 10; border: 3px solid rgb(0, 0, 150); background-color: rgba(255, 255, 255, 200); padding :5px")
       self.logTag = Text(self, 14, "     MESSAGE     ", 175, 125)
       self.logTag.setStyle("color:white; background-color: {}; border-radius: 7; padding :3px".format(self.color.darkblue))
+      self.log = Text(self, 15.5, "   PLEASE SELECT 10 SUB-STATIONS   ", 36, 140)
+      self.log.setSize(400, 40)
+      self.log.normal()
+      
       self.run = Button(self, 20, "RUN", 50, 670)
       self.run.setSize(150, 40)
       self.run.setStyle("color:{}; background-color: {}; border-radius: 10; border: 4px solid {}".format(self.color.white, self.color.darkblue, self.color.darkblue))
+      self.run.disable()
 
       self.home = Button(self, 20, "HOME", 250, 670)
       self.home.setSize(150, 40)
@@ -198,96 +204,117 @@ class UserInterface(QWidget):
          self.goalMultiStationText.focus()
          self.focusGoal = 3
 
-      if(self.goalPositionInput.submit):
-         self.goalPositionInput.submit = False
-         if( self.goalPositionInput.getInput().isnumeric() ):
-            self.goalPosition = self.goalPositionInput.getInput()
+#-----------------------------------------------------------------------------------------------------------------
+
+      self.log.normal()
+      self.log.setText("HELLO")
+
+      self.substation = self.station.selected
+
+      # if( len(self.station.selected) < 10):
+      if( len(self.station.selected) < 3):
+         self.log.normal()
+         # self.log.setText( "   PLEASE SELECT {} SUB-STATIONS   ".format(10-len(self.station.selected)) )
+         self.log.setText( "PLEASE SELECT {} SUB-STATIONS".format(3-len(self.station.selected)) )
+      else:
+         self.log.normal()
+         self.log.setText( "PLEASE INPUT MAX SPEED AND GOAL".format(3-len(self.station.selected)) )
+         
+
+      msi = self.maxSpeedInput.getInput()
+      if(msi.replace('.','',1).isdigit()):
+         if(float(msi) > 10):
+            self.log.error()
+            self.log.setText("MAX SPEED CANNOT EXCEED 10 RPM")
+            self.maxSpeed = -1
+         if(float(msi) < 5):
+            self.log.error()
+            self.log.setText("MAX SPEED CANNOT BELOW 5 RPM")
+            self.maxSpeed = -1
          else:
-            self.log.setText("INPUT NEED TO BE A NUMBER")
-            # self.log.setStyle("color:red")
-      if(self.goalSingleStationInput.submit):
-         self.goalSingleStationInput.submit = False
-         self.goalSingleStation = self.goalSingleStationInput.getInput()
-      if(self.goalMultiStationInput[0].submit):
-         self.goalMultiStationInput[0].submit = False
-         self.goalMultiStation.append(int(self.goalMultiStationInput[0].getInput()))
+            self.maxSpeed = msi
+      else:
+         if(msi != ''):
+            if(msi[0] == '-'):
+               self.log.error()
+               self.log.setText("MAX SPEED CANNOT BE NEGATIVE")
+               self.maxSpeed = -1
+            else:
+               self.log.error()
+               self.log.setText("INPUT MAX SPEED NEED TO BE A NUMBER")
+               self.maxSpeed = -1
+
+      # print(self.maxSpeed)
+
+      gpi = self.goalPositionInput.getInput()
+      if(gpi.replace('.','',1).isdigit()):
+         if(float(gpi) >= 360):
+            self.log.error()
+            self.log.setText("POSITION NEED TO BE LESS THAN 360 DEGREE")
+            self.goalPosition = -1
+         else:
+            self.goalPosition = gpi
+      else:
+         if(gpi != ''):
+            if(gpi[0] == '-'):
+               self.log.error()
+               self.log.setText("POSITION CANNOT BE NEGATIVE")
+               self.goalPosition = -1
+            else:
+               self.log.error()
+               self.log.setText("INPUT POSITION NEED TO BE A NUMBER")
+               self.goalPosition = -1
+
+      # print(self.goalPosition)
+
+            
+      if(len(self.substation) == 3 and self.maxSpeed != -1 and self.goalPosition != -1 and msi != '' and gpi != ''):
+         self.log.normal()
+         self.log.setText("READY TO RUN")
+         self.run.enable()
+         self.run.ready = True
+      else:
+         self.run.disable()
+         self.run.ready = False
 
       if(self.run.pressed):
          self.run.pressed = False
-         if(self.focusGoal == 1):
-            print("Goal Position :", self.goalPosition)
-         elif(self.focusGoal == 2):
-            print("Goal Single Station :", self.goalSingleStation)
-         elif(self.focusGoal == 3):
-            print("Goal Multi Station :", self.goalMultiStation)
+         if(self.run.ready):
+            self.home.disable()
+            self.home.ready = False
+            if(self.focusGoal == 1):
+               print("Goal Position :", self.goalPosition)
+               # self.home.enable()
+               # self.home.ready = True
+         # elif(self.focusGoal == 2):
+         #    if(self.goalSingleStation != -1):
+         #       print("Goal Single Station :", self.goalSingleStation)
+         # elif(self.focusGoal == 3):
+         #    if(self.goalMultiStation != []):
+         #       print("Goal Multi Station :", self.goalMultiStation)
 
-
-
-      # if(self.mode == 1 or self.mode == 3 or self.mode == 5):
-      #    # if( len(self.station.selected) < 10):
-      #    if( len(self.station.selected) < 3):
-      #       self.log.setText( "   PLEASE SELECT {} SUB-STATIONS   ".format(10-len(self.station.selected)) )
-      #       self.maxSpeedInput.disable()
-      #       self.goalPositionInput.disable()
-      #       self.mode = 1
-      #    else:
-      #       if(self.mode == 1):
-      #          self.mode = 2
-
-      # if(self.mode == 2):
-      #    self.log.setText( "   PLEASE INPUT MAX SPEED   ")
-      #    self.mode = 3
-
-      # if(self.mode == 3):
-      #    self.maxSpeedInput.enable()
-      #    if(self.maxSpeedInput.submit == True):
-      #       self.maxSpeedInput.submit = False
-      #       msi = self.maxSpeedInput.getInput()
-      #       if(msi.isnumeric()):
-      #          msi = int(msi)
-      #          if(msi <= 10):
-      #             self.maxSpeed = msi
-      #             print("Max Speed :", self.maxSpeed)
-      #             self.mode = 4
-      #          else:
-      #             self.log.setText( "   MAX SPEED CANNOT EXCEED 10 RPM   ")
-      #             self.maxSpeedInput.clear()
-      #       else:
-      #          if(msi[0] == '-'):
-      #             self.log.setText( "   MAX SPEED NEED CANNOT BE NEGATIVE   ")
-      #             self.maxSpeedInput.clear()
-      #          else:
-      #             self.log.setText( "   MAX SPEED NEED TO BE A NUMBER   ")
-      #             self.maxSpeedInput.clear()
-
-      # if(self.mode == 4):
-      #    self.log.setText( "   PLEASE INPUT GOAL POSITION   ")
-      #    self.mode = 5
-      
-      # if(self.mode == 5):
-      #    self.goalPositionInput.enable()
-
-      # print(self.mode)
-
-
-
+#-----------------------------------------------------------------------------------------------------------------
 
    def endEffControl(self):
       if(self.endEffStatus == "DISABLE"):
          self.endEffStatus = "ENABLE"
          self.endEffStatusText.setStyle("color:{}".format(self.color.lightblue))
+         print("Enable End-Effector")
       else:
          self.endEffStatus = "DISABLE"
          self.endEffStatusText.setStyle("color:gray")
+         print("Disable End-Effector")
       self.endEffStatusText.setText(self.endEffStatus)
 
    def mcuControl(self):
       if(self.mcuStatus == "DISCONNECT"):
          self.mcuStatus = "CONNECT"
          self.mcuStatusText.setStyle("color:{}".format(self.color.lightblue))
+         print("Connect MCU")
       else:
          self.mcuStatus = "DISCONNECT"
          self.mcuStatusText.setStyle("color:gray")
+         print("Disconnect MCU")
       self.mcuStatusText.setText(self.mcuStatus)
 
 
