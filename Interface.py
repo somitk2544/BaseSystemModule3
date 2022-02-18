@@ -49,6 +49,7 @@ class UserInterface(QWidget):
       self.home = Button(self, 20, "HOME", 250, 670)
       self.home.setSize(150, 40)
       self.home.setStyle("color:{}; background-color: {}; border-radius: 10; border: 4px solid {}".format(self.color.white, self.color.lightgray, self.color.lightgray))
+      self.home.ready = True
 
       self.speedBorder = Text(self, 0, '', 501, 40)
       self.speedBorder.setSize(275, 150)
@@ -383,6 +384,11 @@ class UserInterface(QWidget):
 
             print("Max Speed : ", self.maxSpeed)
             print()
+
+      if(self.home.pressed):
+         self.home.pressed = False
+         if(self.home.ready):
+            print("Set Home")
 
 #-----------------------------------------------------------------------------------------------------------------
 
