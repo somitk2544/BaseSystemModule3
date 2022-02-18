@@ -92,13 +92,15 @@ class UserInterface(QWidget):
             self.goalMultiStationInput.append(InputBox(self, 18, 530+48*j, 400+48*i))
             self.goalMultiStationInput[-1].setSize(25, 25)
             self.goalMultiStationInput[-1].disable()
+      
+      self.goalMultiStationInput.append(InputBox(self, 18, 1000, 1000))
+      self.goalMultiStationInput[-1].setSize(25, 25)
+      self.goalMultiStationInput[-1].disable()
 
       self.goalMultiStationInput[0].enable()
       self.goalMultiStationInput[0].focus()
 
-      
-   
-      
+         
       self.goalLine1 = Text(self, 0, '', 640, 258)
       self.goalLine1.setSize(3, 87)
       self.goalLine1.setStyle("color:{}; background-color: white; border: 3px solid white; padding :0px".format(self.color.darkblue))
@@ -171,6 +173,11 @@ class UserInterface(QWidget):
       self.angle += 1
       self.arrow.setPixmap( self.arrowImage.transformed(QTransform().rotate(self.angle),Qt.SmoothTransformation) )
 
+      focusMultiStationInput = False
+      for i in range(15):
+         if(self.goalMultiStationInput[i].focused):
+            focusMultiStationInput = True
+
       if(self.goalPositionInput.focused and self.focusGoal != 1):
          self.goalSingleStationInput.unfocus()
          self.goalSingleStationText.unfocus()
@@ -195,7 +202,7 @@ class UserInterface(QWidget):
          self.goalSharp.focus()
          self.focusGoal = 2
 
-      elif(self.goalMultiStationInput[0].focused and self.focusGoal != 3):
+      elif(focusMultiStationInput and self.focusGoal != 3):
          self.goalPositionInput.unfocus()
          self.goalPositionText.unfocus()
          self.goalSingleStationInput.unfocus()
@@ -318,32 +325,27 @@ class UserInterface(QWidget):
                      self.goalMultiStation[i] = -1
 
       
-      for i in range(min(self.goalMultiStationSize, 14)):
-         if(self.goalMultiStation[i] != -1):
-            self.goalMultiStationInput[i+1].enable()
-            self.goalMultiStationInput[i+1].focus()
-            self.goalMultiStationSize = i+2
-         else:
-            self.goalMultiStationInput[i+1].disable()
-            self.goalMultiStationSize = i+1
+            for i in range(min(self.goalMultiStationSize, 15)):
+               if(self.goalMultiStation[i] != -1):
+                  self.goalMultiStationInput[i+1].enable()
+                  self.goalMultiStationInput[i+1].focus()
+                  self.goalMultiStationSize = i+2
+               else:
+                  self.goalMultiStationInput[i+1].disable()
+                  self.goalMultiStationSize = i+1
 
-      for i in range(15):
-         if(self.goalMultiStation[i] == -1):
-            self.goalMultiStationSize = i+1
-            break
+            for i in range(15):
+               if(self.goalMultiStation[i] == -1):
+                  self.goalMultiStationSize = i+1
+                  break
 
-      for i in range(self.goalMultiStationSize, 15):
-         self.goalMultiStationInput[i].disable()
+            for i in range(self.goalMultiStationSize, 15):
+               self.goalMultiStationInput[i].disable()
 
-      self.goalMultiStationInput[14].disable()
-
-      print(self.goalMultiStation, self.goalMultiStationSize)
+            # print(self.goalMultiStation, self.goalMultiStationSize)
 
 
-
-
-
-
+#-----------------------------------------------------------------------------------------------------------------
 
       if(len(self.substation) == 3 and self.maxSpeed != -1 and msi != ''):
          self.run.ready = False
@@ -367,22 +369,6 @@ class UserInterface(QWidget):
          self.run.disable()
 
 
-
-            
-      # if(len(self.substation) == 3 and self.maxSpeed != -1 and msi != ''):
-      #    if(self.focusGoal == 1):
-      #       if(self.goalPosition != -1 and gpi != ''):
-      #          self.log.normal()
-      #          self.log.setText("READY TO RUN")
-      #          self.run.enable()
-      #          self.run.ready = True
-      #       else:
-      #          self.run.disable()
-      #          self.run.ready = False
-      # else:
-      #    self.run.disable()
-      #    self.run.ready = False
-
       if(self.run.pressed):
          self.run.pressed = False
          if(self.run.ready):
@@ -397,15 +383,6 @@ class UserInterface(QWidget):
 
             print("Max Speed : ", self.maxSpeed)
             print()
-   
-               # self.home.enable()
-               # self.home.ready = True
-         # elif(self.focusGoal == 2):
-         #    if(self.goalSingleStation != -1):
-         #       print("Goal Single Station :", self.goalSingleStation)
-         # elif(self.focusGoal == 3):
-         #    if(self.goalMultiStation != []):
-         #       print("Goal Multi Station :", self.goalMultiStation)
 
 #-----------------------------------------------------------------------------------------------------------------
 
@@ -431,9 +408,6 @@ class UserInterface(QWidget):
          print("Disconnect MCU")
       self.mcuStatusText.setText(self.mcuStatus)
 
-
-      
-   
 
 if __name__ == '__main__':
    app = QApplication(sys.argv)

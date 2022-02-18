@@ -74,7 +74,6 @@ class Button():
 
    def buttonClick(self):
       self.pressed = True
-      # print(self.pressed)
 
    def disable(self):
       self.object.setStyleSheet("color:white; background-color:rgb(200,200,200); border-radius: 10; border: 4px solid rgb(200,200,200)")
@@ -99,9 +98,7 @@ class InputBox():
       self.object = QLineEdit(window)
       self.object.setFont(QFont("Arial", fontSize))
       self.object.move(posX, posY)
-      # self.object.returnPressed.connect(self.pressEnter)
       self.object.setAlignment(Qt.AlignCenter)
-      # self.submit = False
       self.enable()
       self.unfocus()
       self.focused = False
@@ -112,17 +109,11 @@ class InputBox():
 
    def setSize(self, sizeX, sizeY):
       self.object.resize(sizeX, sizeY)
-
-   # def pressEnter(self):
-   #    self.submit = True
-      # print(self.object.text())
-      # self.object.setText("")
    
    def clear(self):
       self.object.setText('')
 
    def focus(self):
-      # print(self.getInput())
       self.focused = True
       self.object.setStyleSheet("color: rgb(48, 55, 60); background-color : rgba(255, 255, 255, 255); border : 0px solid rgb(255, 255, 255); border-radius: 7px")
 
@@ -131,13 +122,10 @@ class InputBox():
       self.object.setStyleSheet("color: rgb(48, 55, 60); background-color : rgba(0, 0, 0, 70); border : 0px solid rgb(255, 255, 255); border-radius: 7px")
 
    def disable(self):
-      # self.clear()
-      # self.object.setReadOnly(True)
       self.unfocus()
       self.object.setDisabled(True)
       
    def enable(self):
-      # self.object.setReadOnly(False)
       self.object.setDisabled(False)
       
    def getInput(self):
