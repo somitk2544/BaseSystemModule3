@@ -1,10 +1,9 @@
-from asyncio import FastChildWatcher
 import sys
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from Element import *
-from qtwidgets import Toggle, AnimatedToggle
+from qtwidgets import AnimatedToggle
 
 class UserInterface(QWidget):
    def __init__(self):
@@ -13,15 +12,10 @@ class UserInterface(QWidget):
 
       self.angle = 0
       self.maxSpeed = 0
-
-      self.mode = 1
-      '''
-      1 = Loop  Select Substation
-      2 = Print Assign Velocity 
-      3 = Loop  Assign Velocity
-      4 = Print Assign Goal
-      5 = Loop  Assign Goal
-      '''
+      self.focusGoal = 3 
+      self.goalPosition = 0
+      self.goalSingleStation = 1
+      self.goalMultiStation  = []
 
       self.background1 = Text(self, 0, '', 0, 0)
       self.background1.setSize(800, 750)
@@ -42,11 +36,11 @@ class UserInterface(QWidget):
       self.logTag.setStyle("color:white; background-color: {}; border-radius: 7; padding :3px".format(self.color.darkblue))
       self.run = Button(self, 20, "RUN", 50, 670)
       self.run.setSize(150, 40)
-      self.run.setStyle("color:{}; background-color: {}; border-radius: 7; border: 4px solid {}".format(self.color.white, self.color.darkblue, self.color.darkblue))
+      self.run.setStyle("color:{}; background-color: {}; border-radius: 10; border: 4px solid {}".format(self.color.white, self.color.darkblue, self.color.darkblue))
 
       self.home = Button(self, 20, "HOME", 250, 670)
       self.home.setSize(150, 40)
-      self.home.setStyle("color:{}; background-color: {}; border-radius: 7; border: 4px solid {}".format(self.color.white, self.color.lightgray, self.color.lightgray))
+      self.home.setStyle("color:{}; background-color: {}; border-radius: 10; border: 4px solid {}".format(self.color.white, self.color.lightgray, self.color.lightgray))
 
       self.speedBorder = Text(self, 0, '', 501, 40)
       self.speedBorder.setSize(275, 150)
@@ -54,16 +48,17 @@ class UserInterface(QWidget):
       self.speedTag = Text(self, 14, "   SPEED   ", 597, 30)
       self.speedTag.setStyle("color:{}; background-color: white; border-radius: 7; border: 3px solid white; padding :0px".format(self.color.darkblue))
       self.maxSpeedText = Text(self, 15, "MAX SPEED\t\tRPM", 530, 70)
-      self.maxSpeedText.setStyle("color:white")
+      self.maxSpeedText.focus()
       self.maxSpeedText.object.setAlignment(Qt.AlignLeft)
-      self.nowSpeedText = Text(self, 15, "NOW SPEED\t0.00\tRPM", 530, 110)
-      self.nowSpeedText.setStyle("color:white")
-      self.nowSpeedText.object.setAlignment(Qt.AlignLeft)
-      self.topSpeedText = Text(self, 15, "TOP SPEED\t0.00\tRPM", 530, 150)
-      self.topSpeedText.setStyle("color:white")
-      self.topSpeedText.object.setAlignment(Qt.AlignLeft)
       self.maxSpeedInput = InputBox(self, 15, 645, 68)
       self.maxSpeedInput.setSize(40, 25)
+      self.maxSpeedInput.focus()
+      self.nowSpeedText = Text(self, 15, "NOW SPEED\t0.00\tRPM", 530, 110)
+      self.nowSpeedText.object.setAlignment(Qt.AlignLeft)
+      self.nowSpeedText.focus()
+      self.topSpeedText = Text(self, 15, "TOP SPEED\t0.00\tRPM", 530, 150)
+      self.topSpeedText.object.setAlignment(Qt.AlignLeft)
+      self.topSpeedText.focus()
 
       self.goalBorder = Text(self, 0, '', 501, 220)
       self.goalBorder.setSize(275, 330)
@@ -72,28 +67,29 @@ class UserInterface(QWidget):
       self.goalTag.setStyle("color:{}; background-color: white; border-radius: 7; border: 3px solid white; padding :0px".format(self.color.darkblue))
       
       self.goalPositionText = Text(self, 15, "ANGULAR\nPOSITION", 540, 253)
-      self.goalPositionText.setStyle("color:white")
       self.goalPositionInput = InputBox(self, 16, 550, 298)
       self.goalPositionInput.setSize(50, 25)
-      
+      self.goalDegree = Text(self, 12, "o", 605, 295)
+         
       self.goalSingleStationText = Text(self, 15, "SINGLE\nSTATION", 675, 253)
-      self.goalSingleStationText.setStyle("color:white")
       self.goalSingleStationInput = InputBox(self, 18, 700, 298)
       self.goalSingleStationInput.setSize(25, 25)
+      self.goalSharp = Text(self, 15, "#", 685, 300)
 
       self.goalMultiStationText = Text(self, 15, "MULTI STATION QUEUE", 552, 370)
-      self.goalMultiStationText.setStyle("color:white")
-
+      self.goalMultiStationText.focus()
       self.goalMultiStationInput = []
       for i in range(3):
          for j in range(5):
             self.goalMultiStationInput.append(InputBox(self, 18, 530+48*j, 400+48*i))
             self.goalMultiStationInput[-1].setSize(25, 25)
+            self.goalMultiStationInput[-1].disable()
+
+      self.goalMultiStationInput[0].enable()
+      self.goalMultiStationInput[0].focus()
+
       
-      self.goalSharp = Text(self, 15, "#", 685, 300)
-      self.goalSharp.setStyle("color:white")
-      self.goalDegree = Text(self, 12, "o", 605, 295)
-      self.goalDegree.setStyle("color:white")
+   
       
       self.goalLine1 = Text(self, 0, '', 640, 258)
       self.goalLine1.setSize(3, 87)
@@ -167,51 +163,111 @@ class UserInterface(QWidget):
       self.angle += 1
       self.arrow.setPixmap( self.arrowImage.transformed(QTransform().rotate(self.angle),Qt.SmoothTransformation) )
 
-      if(self.mode == 1 or self.mode == 3 or self.mode == 5):
-         # if( len(self.station.selected) < 10):
-         if( len(self.station.selected) < 3):
-            self.log.setText( "   PLEASE SELECT {} SUB-STATIONS   ".format(10-len(self.station.selected)) )
-            self.maxSpeedInput.disable()
-            self.goalPositionInput.disable()
-            self.mode = 1
+      if(self.goalPositionInput.focused and self.focusGoal != 1):
+         self.goalSingleStationInput.unfocus()
+         self.goalSingleStationText.unfocus()
+         for i in range(15):
+            self.goalMultiStationInput[i].unfocus()
+         self.goalMultiStationText.unfocus()
+         self.goalSharp.unfocus()
+         self.goalPositionInput.focus()
+         self.goalPositionText.focus()
+         self.goalDegree.focus()
+         self.focusGoal = 1
+
+      elif(self.goalSingleStationInput.focused and self.focusGoal != 2):
+         self.goalPositionInput.unfocus()
+         self.goalPositionText.unfocus()
+         for i in range(15):
+            self.goalMultiStationInput[i].unfocus()
+         self.goalMultiStationText.unfocus()
+         self.goalDegree.unfocus()
+         self.goalSingleStationInput.focus()
+         self.goalSingleStationText.focus()
+         self.goalSharp.focus()
+         self.focusGoal = 2
+
+      elif(self.goalMultiStationInput[0].focused and self.focusGoal != 3):
+         self.goalPositionInput.unfocus()
+         self.goalPositionText.unfocus()
+         self.goalSingleStationInput.unfocus()
+         self.goalSingleStationText.unfocus()
+         self.goalDegree.unfocus()
+         self.goalSharp.unfocus()
+         self.goalMultiStationInput[0].focus()
+         self.goalMultiStationText.focus()
+         self.focusGoal = 3
+
+      if(self.goalPositionInput.submit):
+         self.goalPositionInput.submit = False
+         if( self.goalPositionInput.getInput().isnumeric() ):
+            self.goalPosition = self.goalPositionInput.getInput()
          else:
-            if(self.mode == 1):
-               self.mode = 2
+            self.log.setText("INPUT NEED TO BE A NUMBER")
+            # self.log.setStyle("color:red")
+      if(self.goalSingleStationInput.submit):
+         self.goalSingleStationInput.submit = False
+         self.goalSingleStation = self.goalSingleStationInput.getInput()
+      if(self.goalMultiStationInput[0].submit):
+         self.goalMultiStationInput[0].submit = False
+         self.goalMultiStation.append(int(self.goalMultiStationInput[0].getInput()))
 
-      if(self.mode == 2):
-         self.log.setText( "   PLEASE INPUT MAX SPEED   ")
-         self.mode = 3
+      if(self.run.pressed):
+         self.run.pressed = False
+         if(self.focusGoal == 1):
+            print("Goal Position :", self.goalPosition)
+         elif(self.focusGoal == 2):
+            print("Goal Single Station :", self.goalSingleStation)
+         elif(self.focusGoal == 3):
+            print("Goal Multi Station :", self.goalMultiStation)
 
-      if(self.mode == 3):
-         self.maxSpeedInput.enable()
-         if(self.maxSpeedInput.submit == True):
-            self.maxSpeedInput.submit = False
-            msi = self.maxSpeedInput.getInput()
-            if(msi.isnumeric()):
-               msi = int(msi)
-               if(msi <= 10):
-                  self.maxSpeed = msi
-                  print("Max Speed :", self.maxSpeed)
-                  self.mode = 4
-               else:
-                  self.log.setText( "   MAX SPEED CANNOT EXCEED 10 RPM   ")
-                  self.maxSpeedInput.clear()
-            else:
-               if(msi[0] == '-'):
-                  self.log.setText( "   MAX SPEED NEED CANNOT BE NEGATIVE   ")
-                  self.maxSpeedInput.clear()
-               else:
-                  self.log.setText( "   MAX SPEED NEED TO BE A NUMBER   ")
-                  self.maxSpeedInput.clear()
 
-      if(self.mode == 4):
-         self.log.setText( "   PLEASE INPUT GOAL POSITION   ")
-         self.mode = 5
+
+      # if(self.mode == 1 or self.mode == 3 or self.mode == 5):
+      #    # if( len(self.station.selected) < 10):
+      #    if( len(self.station.selected) < 3):
+      #       self.log.setText( "   PLEASE SELECT {} SUB-STATIONS   ".format(10-len(self.station.selected)) )
+      #       self.maxSpeedInput.disable()
+      #       self.goalPositionInput.disable()
+      #       self.mode = 1
+      #    else:
+      #       if(self.mode == 1):
+      #          self.mode = 2
+
+      # if(self.mode == 2):
+      #    self.log.setText( "   PLEASE INPUT MAX SPEED   ")
+      #    self.mode = 3
+
+      # if(self.mode == 3):
+      #    self.maxSpeedInput.enable()
+      #    if(self.maxSpeedInput.submit == True):
+      #       self.maxSpeedInput.submit = False
+      #       msi = self.maxSpeedInput.getInput()
+      #       if(msi.isnumeric()):
+      #          msi = int(msi)
+      #          if(msi <= 10):
+      #             self.maxSpeed = msi
+      #             print("Max Speed :", self.maxSpeed)
+      #             self.mode = 4
+      #          else:
+      #             self.log.setText( "   MAX SPEED CANNOT EXCEED 10 RPM   ")
+      #             self.maxSpeedInput.clear()
+      #       else:
+      #          if(msi[0] == '-'):
+      #             self.log.setText( "   MAX SPEED NEED CANNOT BE NEGATIVE   ")
+      #             self.maxSpeedInput.clear()
+      #          else:
+      #             self.log.setText( "   MAX SPEED NEED TO BE A NUMBER   ")
+      #             self.maxSpeedInput.clear()
+
+      # if(self.mode == 4):
+      #    self.log.setText( "   PLEASE INPUT GOAL POSITION   ")
+      #    self.mode = 5
       
-      if(self.mode == 5):
-         self.goalPositionInput.enable()
+      # if(self.mode == 5):
+      #    self.goalPositionInput.enable()
 
-      print(self.mode)
+      # print(self.mode)
 
 
 
@@ -236,9 +292,6 @@ class UserInterface(QWidget):
 
 
       
-
-
-
    
 
 if __name__ == '__main__':

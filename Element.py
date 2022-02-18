@@ -1,4 +1,3 @@
-from select import select
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -24,6 +23,7 @@ class Text():
       self.object.setFont(QFont("Arial", fontSize))
       self.object.move(posX, posY)
       self.object.setAlignment(Qt.AlignCenter)
+      self.unfocus()
       
    def setPosition(self, posX, posY):
       self.object.move(posX, posY)
@@ -36,6 +36,12 @@ class Text():
 
    def setText(self, text):
       self.object.setText(text)
+
+   def unfocus(self):
+      self.object.setStyleSheet("color:gray")
+
+   def focus(self):
+      self.object.setStyleSheet("color:white")
 
 #-------------------------------------------------------#
 
@@ -64,7 +70,16 @@ class Button():
 
 #-------------------------------------------------------#
 
+class QLineEdit(QLineEdit):
+   focusSignal = pyqtSignal()
+
+   def focusInEvent(self, event):
+      self.focusSignal.emit()
+
+#-------------------------------------------------------#
+
 class InputBox():
+   focus_in_signal = pyqtSignal()
    def __init__(self, window, fontSize, posX, posY):
       self.object = QLineEdit(window)
       self.object.setFont(QFont("Arial", fontSize))
@@ -72,7 +87,10 @@ class InputBox():
       self.object.returnPressed.connect(self.pressEnter)
       self.object.setAlignment(Qt.AlignCenter)
       self.submit = False
-      self.disable()
+      self.enable()
+      self.unfocus()
+      self.focused = False
+      self.object.focusSignal.connect(self.focus)
 
    def setPosition(self, posX, posY):
       self.object.move(posX, posY)
@@ -88,14 +106,24 @@ class InputBox():
    def clear(self):
       self.object.setText('')
 
+   def focus(self):
+      # print(self.getInput())
+      self.focused = True
+      self.object.setStyleSheet("color: rgb(48, 55, 60); background-color : rgba(255, 255, 255, 255); border : 0px solid rgb(255, 255, 255); border-radius: 7px")
+
+   def unfocus(self):
+      self.focused = False
+      self.object.setStyleSheet("color: rgb(48, 55, 60); background-color : rgba(0, 0, 0, 70); border : 0px solid rgb(255, 255, 255); border-radius: 7px")
+
    def disable(self):
       # self.clear()
-      self.object.setReadOnly(True)
-      self.object.setStyleSheet("color: rgb(48,  55,  60 ); background-color : rgba(0, 0, 0, 70); border : 0px solid rgb(255, 255, 255); border-radius: 7px")
-
+      # self.object.setReadOnly(True)
+      self.unfocus()
+      self.object.setDisabled(True)
+      
    def enable(self):
-      self.object.setReadOnly(False)
-      self.object.setStyleSheet("color: rgb(48,  55,  60 ); background-color : rgba(255, 255, 255, 255); border : 0px solid rgb(255, 255, 255); border-radius: 7px")
+      # self.object.setReadOnly(False)
+      self.object.setDisabled(False)
       
    def getInput(self):
       return self.object.text()
