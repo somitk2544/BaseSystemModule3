@@ -227,7 +227,7 @@ class UserInterface(QWidget):
             self.log.error()
             self.log.setText("MAX SPEED CANNOT EXCEED 10 RPM")
             self.maxSpeed = -1
-         if(float(msi) < 5):
+         elif(float(msi) < 5):
             self.log.error()
             self.log.setText("MAX SPEED CANNOT BELOW 5 RPM")
             self.maxSpeed = -1
@@ -243,39 +243,113 @@ class UserInterface(QWidget):
                self.log.error()
                self.log.setText("INPUT MAX SPEED NEED TO BE A NUMBER")
                self.maxSpeed = -1
-
       # print(self.maxSpeed)
 
       gpi = self.goalPositionInput.getInput()
-      if(gpi.replace('.','',1).isdigit()):
-         if(float(gpi) >= 360):
-            self.log.error()
-            self.log.setText("POSITION NEED TO BE LESS THAN 360 DEGREE")
-            self.goalPosition = -1
-         else:
-            self.goalPosition = gpi
-      else:
-         if(gpi != ''):
-            if(gpi[0] == '-'):
+      if(self.focusGoal == 1):
+         if(gpi.replace('.','',1).isdigit()):
+            if(float(gpi) >= 360):
                self.log.error()
-               self.log.setText("POSITION CANNOT BE NEGATIVE")
+               self.log.setText("POSITION NEED TO BE LESS THAN 360 DEGREE")
                self.goalPosition = -1
             else:
+               self.goalPosition = gpi
+         else:
+            if(gpi != ''):
+               if(gpi[0] == '-'):
+                  self.log.error()
+                  self.log.setText("POSITION CANNOT BE NEGATIVE")
+                  self.goalPosition = -1
+               else:
+                  self.log.error()
+                  self.log.setText("INPUT POSITION NEED TO BE A NUMBER")
+                  self.goalPosition = -1
+         # print(self.goalPosition)
+
+      gssi = self.goalSingleStationInput.getInput()
+      if(self.focusGoal == 2):
+         if(gssi.isdigit()):
+            if(int(gssi) < 1 or int(gssi) > 10):
                self.log.error()
-               self.log.setText("INPUT POSITION NEED TO BE A NUMBER")
-               self.goalPosition = -1
+               self.log.setText("INPUT STATION # BETWEEN 1-10")
+               self.goalSingleStation = -1
+            else:
+               self.goalSingleStation = gssi
+         else:
+            if(gssi != ''):
+               if(gssi[0] == '-'):
+                  self.log.error()
+                  self.log.setText("STATION #  CANNOT BE NEGATIVE")
+                  self.goalSingleStation = -1
+               else:
+                  self.log.error()
+                  self.log.setText("STATION # NEED TO BE AN INTEGER")
+                  self.goalSingleStation = -1
+      # print(self.goalSingleStation)
 
-      # print(self.goalPosition)
+      gmsi = self.goalMultiStationInput[0].getInput()
+      if(self.focusGoal == 3):
+         if(gmsi.isdigit()):
+            if(int(gmsi) < 1 or int(gmsi) > 10):
+               self.log.error()
+               self.log.setText("INPUT STATION # BETWEEN 1-10")
+               self.goalMultiStation = -1
+            else:
+               self.goalMultiStation = gmsi
+         else:
+            if(gmsi != ''):
+               if(gmsi[0] == '-'):
+                  self.log.error()
+                  self.log.setText("STATION #  CANNOT BE NEGATIVE")
+                  self.goalMultiStation = -1
+               else:
+                  self.log.error()
+                  self.log.setText("STATION # NEED TO BE AN INTEGER")
+                  self.goalMultiStation = -1
+         # print(self.goalMultiStation)
 
-            
-      if(len(self.substation) == 3 and self.maxSpeed != -1 and self.goalPosition != -1 and msi != '' and gpi != ''):
+
+
+
+
+
+      if(len(self.substation) == 3 and self.maxSpeed != -1 and msi != ''):
+         self.run.ready = False
+         if(self.focusGoal == 1):
+            if(self.goalPosition != -1 and gpi != ''):
+               self.run.ready = True              
+         elif(self.focusGoal == 2):
+            if(self.goalSingleStation != -1 and gssi != ''):
+               self.run.ready = True
+         elif(self.focusGoal == 3):
+            if(self.goalMultiStation != -1 and gmsi != ''):
+               self.run.ready = True
+      else:
+         self.run.ready = False
+
+      if(self.run.ready):
          self.log.normal()
          self.log.setText("READY TO RUN")
          self.run.enable()
-         self.run.ready = True
       else:
          self.run.disable()
-         self.run.ready = False
+
+
+
+            
+      # if(len(self.substation) == 3 and self.maxSpeed != -1 and msi != ''):
+      #    if(self.focusGoal == 1):
+      #       if(self.goalPosition != -1 and gpi != ''):
+      #          self.log.normal()
+      #          self.log.setText("READY TO RUN")
+      #          self.run.enable()
+      #          self.run.ready = True
+      #       else:
+      #          self.run.disable()
+      #          self.run.ready = False
+      # else:
+      #    self.run.disable()
+      #    self.run.ready = False
 
       if(self.run.pressed):
          self.run.pressed = False
@@ -284,6 +358,14 @@ class UserInterface(QWidget):
             self.home.ready = False
             if(self.focusGoal == 1):
                print("Goal Position :", self.goalPosition)
+            elif(self.focusGoal == 2):
+               print("Goal Single Station :", self.goalSingleStation)
+            elif(self.focusGoal == 3):
+               print("Goal Multi Station :", self.goalMultiStation)
+
+            print("Max Speed : ", self.maxSpeed)
+            print()
+   
                # self.home.enable()
                # self.home.ready = True
          # elif(self.focusGoal == 2):
