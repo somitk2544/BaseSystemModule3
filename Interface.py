@@ -55,7 +55,7 @@ class UserInterface(QWidget):
       self.speedBorder.setSize(275, 150)
       self.speedBorder.setStyle("border-radius: 15; border: 3px solid white")
       self.speedTag = Text(self, 14, "   SPEED   ", 597, 30)
-      self.speedTag.setStyle("color:{}; background-color: white; border-radius: 7; border: 3px solid white; padding :0px".format(self.color.darkblue))
+      self.speedTag.setStyle("color:{}; background-color: white; border-radius: 7; border: 3px solid white".format(self.color.darkblue))
       self.maxSpeedText = Text(self, 15, "MAX SPEED\t\tRPM", 530, 70)
       self.maxSpeedText.focus()
       self.maxSpeedText.object.setAlignment(Qt.AlignLeft)
@@ -73,7 +73,7 @@ class UserInterface(QWidget):
       self.goalBorder.setSize(275, 330)
       self.goalBorder.setStyle("border-radius: 15; border: 3px solid white")
       self.goalTag = Text(self, 14, "   GOAL   ", 602, 210)
-      self.goalTag.setStyle("color:{}; background-color: white; border-radius: 7; border: 3px solid white; padding :0px".format(self.color.darkblue))
+      self.goalTag.setStyle("color:{}; background-color: white; border-radius: 7; border: 3px solid white".format(self.color.darkblue))
       
       self.goalPositionText = Text(self, 15, "ANGULAR\nPOSITION", 540, 253)
       self.goalPositionInput = InputBox(self, 16, 550, 298)
@@ -102,12 +102,12 @@ class UserInterface(QWidget):
       self.goalMultiStationInput[0].focus()
 
          
-      self.goalLine1 = Text(self, 0, '', 640, 258)
-      self.goalLine1.setSize(3, 87)
-      self.goalLine1.setStyle("color:{}; background-color: white; border: 3px solid white; padding :0px".format(self.color.darkblue))
+      self.goalLine1 = Text(self, 0, '', 640, 253)
+      self.goalLine1.setSize(3, 92)
+      self.goalLine1.setStyle("background-color: white; border: 3px solid white")
       self.goalLine2 = Text(self, 0, '', 524, 344)
       self.goalLine2.setSize(226, 3)
-      self.goalLine2.setStyle("color:{}; background-color: white; border: 3px solid white; padding :0px".format(self.color.darkblue))
+      self.goalLine2.setStyle("background-color: white; border: 3px solid white")
 
 
       self.endEffStatus = "DISABLE"
@@ -115,7 +115,7 @@ class UserInterface(QWidget):
       self.endEffBorder.setSize(275, 60)
       self.endEffBorder.setStyle("border-radius: 15; border: 3px solid white")
       self.endEffTag = Text(self, 14, "   END-EFFECTOR   ", 567, 570)
-      self.endEffTag.setStyle("color:{}; background-color: white; border-radius: 7; border: 3px solid white; padding :0px".format(self.color.darkblue))
+      self.endEffTag.setStyle("color:{}; background-color: white; border-radius: 7; border: 3px solid white".format(self.color.darkblue))
       self.endEffText = Text(self, 16, "STATUS", 530, 605)
       self.endEffText.setStyle("color:white")
       self.endEffToggle = AnimatedToggle(self, checked_color="#44ccff", pulse_checked_color="#cc99ccff")
@@ -130,7 +130,7 @@ class UserInterface(QWidget):
       self.mcuBorder.setSize(275, 60)
       self.mcuBorder.setStyle("border-radius: 15; border: 3px solid white")
       self.mcuTag = Text(self, 14, "   MCU   ", 604, 660)
-      self.mcuTag.setStyle("color:{}; background-color: white; border-radius: 7; border: 3px solid white; padding :0px".format(self.color.darkblue))
+      self.mcuTag.setStyle("color:{}; background-color: white; border-radius: 7; border: 3px solid white".format(self.color.darkblue))
       self.mcuText = Text(self, 16, "STATUS", 530, 695)
       self.mcuText.setStyle("color:white")
       self.mcuToggle = AnimatedToggle(self, checked_color="#44ccff", pulse_checked_color="#cc99ccff")
@@ -141,20 +141,17 @@ class UserInterface(QWidget):
       self.mcuStatusText.setStyle("color:gray")
 
       self.arrow = QLabel(self)
-      self.arrow.move(40, 225)
+      self.arrow.move(40, 230)
       self.arrowImage = QPixmap("/Users/Peace/Desktop/BaseSystemModule3/arrow.png")
       self.arrowImage = self.arrowImage.scaled(390, 390, Qt.KeepAspectRatio)
       self.arrow.setPixmap( self.arrowImage.transformed(QTransform().rotate(0),Qt.SmoothTransformation) )
       self.arrow.setAlignment(Qt.AlignCenter)
 
-      # self.pie = QLabel(self)
-      # self.pie.move(35, 220)
-      # self.pieImage = QPixmap("/Users/Peace/Desktop/BaseSystemModule3/pie.png")
-      # self.pieImage = self.pieImage.scaled(400, 400, Qt.KeepAspectRatio)
-      # self.pie.setPixmap( self.pieImage )
-      # self.pie.setAlignment(Qt.AlignCenter)
-
-      self.station = Station(self, 35, 220, 200)
+      self.homeLine = Text(self, 0, '',233, 205)
+      self.homeLine.setSize(5, 40)
+      self.homeLine.setStyle("background-color: red; border: 3px solid red")
+      
+      self.station = Station(self, 35, 225, 200)
 
       self.timer=QTimer()
       self.timer.timeout.connect(self.showTime)
@@ -376,19 +373,18 @@ class UserInterface(QWidget):
             self.home.disable()
             self.home.ready = False
             if(self.focusGoal == 1):
-               print("Goal Position :", self.goalPosition)
+               self.mode_5() # Set Goal Position
             elif(self.focusGoal == 2):
-               print("Goal Single Station :", self.goalSingleStation)
+               self.mode_6() # Set Goal Single Station
             elif(self.focusGoal == 3):
-               print("Goal Multi Station :", self.goalMultiStation[:self.goalMultiStationSize-1])
+               self.mode_7() # Set Goal Multi Station
 
-            print("Max Speed : ", self.maxSpeed)
-            print()
+            self.mode_4() # Set Max Speed
 
       if(self.home.pressed):
          self.home.pressed = False
          if(self.home.ready):
-            print("Set Home")
+            self.mode_14() # Set Home
 
 #-----------------------------------------------------------------------------------------------------------------
 
@@ -396,23 +392,66 @@ class UserInterface(QWidget):
       if(self.endEffStatus == "DISABLE"):
          self.endEffStatus = "ENABLE"
          self.endEffStatusText.setStyle("color:{}".format(self.color.lightblue))
-         print("Enable End-Effector")
+         self.mode_12() # Enable End-Effector
       else:
          self.endEffStatus = "DISABLE"
          self.endEffStatusText.setStyle("color:gray")
-         print("Disable End-Effector")
+         self.mode_13() # Disable End-Effector
       self.endEffStatusText.setText(self.endEffStatus)
 
    def mcuControl(self):
       if(self.mcuStatus == "DISCONNECT"):
          self.mcuStatus = "CONNECT"
          self.mcuStatusText.setStyle("color:{}".format(self.color.lightblue))
-         print("Connect MCU")
+         self.mode_2() # Connect MCU
       else:
          self.mcuStatus = "DISCONNECT"
          self.mcuStatusText.setStyle("color:gray")
-         print("Disconnect MCU")
+         self.mode_3() # Disconnect MCU
       self.mcuStatusText.setText(self.mcuStatus)
+
+   def mode_1(self):
+      pass
+
+   def mode_2(self):
+      print("Connect MCU")
+
+   def mode_3(self):
+      print("Disconnect MCU")
+
+   def mode_4(self):
+      print("Max Speed : ", self.maxSpeed)
+      self.mode_8() # Go to Goal
+
+   def mode_5(self):
+      print("Goal Position :", self.goalPosition)
+
+   def mode_6(self):
+      print("Goal Single Station :", self.goalSingleStation)
+
+   def mode_7(self):
+      print("Goal Multi Station :", self.goalMultiStation[:self.goalMultiStationSize-1])
+
+   def mode_8(self):
+      print("Go to Goal\n")
+
+   def mode_9(self):
+      pass
+
+   def mode_10(self):
+      pass
+
+   def mode_11(self):
+      pass
+
+   def mode_12(self):
+      print("Enable End-Effector")
+
+   def mode_13(self):
+      print("Disable End-Effector")
+
+   def mode_14(self):
+      print("Set Home")
 
 
 if __name__ == '__main__':
