@@ -157,8 +157,7 @@ class Station:
          if(self.substation[i].pressed):
             self.substation[i].pressed = False
             if(i not in self.selected):
-               # if(len(self.selected) < 10):
-               if(len(self.selected) < 3):
+               if(len(self.selected) < 10):
                   self.selected.append(i)
                   self.selected.sort()
                   self.substation[i].setStyle("background-color: black ; border-radius: 7; border: 2px solid black")

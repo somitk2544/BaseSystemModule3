@@ -4,13 +4,25 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from Element import *
 from qtwidgets import AnimatedToggle
+import platform
+import serial
+import math
+
+os = platform.platform()[0].upper()
+if os == 'W': #Windows
+   ser = serial.Serial('COM3',512000,parity='E',stopbits=1,timeout=1)
+elif os == 'M': #Mac
+   ser = serial.Serial('/dev/cu.usbmodem14103', 512000, parity='E', stopbits=1, timeout=1)
 
 class UserInterface(QWidget):
    def __init__(self):
       super().__init__()
       self.windowInit()
 
-      self.angle = 0
+      self.currentStation = 0
+      self.currentAngle = 0
+      self.currentSpeed = 0
+
       self.substation = []
       self.maxSpeed = -1
       self.focusGoal = 3 
@@ -26,7 +38,7 @@ class UserInterface(QWidget):
 
       self.background2 = Text(self, 0, '', 475, 0)
       self.background2.setSize(325, 750)
-      self.background2.object.setPixmap(QPixmap("/Users/Peace/Desktop/BaseSystemModule3/background.png")) 
+      self.background2.object.setPixmap(QPixmap("Desktop/BaseSystemModule3/background.png")) 
 
       self.title = Text(self, 28, "         BASE SYSTEM         ", 50, 30)
       self.title.setStyle("color: white; border-radius: 25; background-color: {}; padding: 10px".format(self.color.darkgray))
@@ -118,7 +130,7 @@ class UserInterface(QWidget):
       self.endEffTag.setStyle("color:{}; background-color: white; border-radius: 7; border: 3px solid white".format(self.color.darkblue))
       self.endEffText = Text(self, 16, "STATUS", 530, 605)
       self.endEffText.setStyle("color:white")
-      self.endEffToggle = AnimatedToggle(self, checked_color="#44ccff", pulse_checked_color="#cc99ccff")
+      self.endEffToggle = AnimatedToggle(self, checked_color="#44ccff", pulse_checked_color="#0099ccff", pulse_unchecked_color="#00ffffff")
       self.endEffToggle.move(599, 590)
       self.endEffToggle.resize(70, 50)
       self.endEffToggle.toggled.connect(self.endEffControl)
@@ -133,16 +145,18 @@ class UserInterface(QWidget):
       self.mcuTag.setStyle("color:{}; background-color: white; border-radius: 7; border: 3px solid white".format(self.color.darkblue))
       self.mcuText = Text(self, 16, "STATUS", 530, 695)
       self.mcuText.setStyle("color:white")
-      self.mcuToggle = AnimatedToggle(self, checked_color="#44ccff", pulse_checked_color="#cc99ccff")
+      self.mcuStatusText = Text(self, 15, "DISCONNECT", 665, 694)
+      self.mcuStatusText.setStyle("color:gray")
+      self.mcuStatusText.setSize(100,20)
+      self.mcuToggle = AnimatedToggle(self, checked_color="#44ccff", pulse_checked_color="#0099ccff", pulse_unchecked_color="#00ffffff")
       self.mcuToggle.move(599, 681)
       self.mcuToggle.resize(70, 50)
       self.mcuToggle.toggled.connect(self.mcuControl)
-      self.mcuStatusText = Text(self, 15, "DISCONNECT", 665, 695)
-      self.mcuStatusText.setStyle("color:gray")
-
+      self.mcuToggle.toggle()
+      
       self.arrow = QLabel(self)
       self.arrow.move(40, 230)
-      self.arrowImage = QPixmap("/Users/Peace/Desktop/BaseSystemModule3/arrow.png")
+      self.arrowImage = QPixmap("Desktop/BaseSystemModule3/arrow.png")
       self.arrowImage = self.arrowImage.scaled(390, 390, Qt.KeepAspectRatio)
       self.arrow.setPixmap( self.arrowImage.transformed(QTransform().rotate(0),Qt.SmoothTransformation) )
       self.arrow.setAlignment(Qt.AlignCenter)
@@ -168,8 +182,8 @@ class UserInterface(QWidget):
       self.color = Color()
 
    def showTime(self):
-      self.angle += 1
-      self.arrow.setPixmap( self.arrowImage.transformed(QTransform().rotate(self.angle),Qt.SmoothTransformation) )
+      # self.currentAngle += 1
+      self.arrow.setPixmap( self.arrowImage.transformed(QTransform().rotate(self.currentAngle),Qt.SmoothTransformation) )
 
       focusMultiStationInput = False
       for i in range(15):
@@ -218,14 +232,12 @@ class UserInterface(QWidget):
 
       self.substation = self.station.selected
 
-      # if( len(self.station.selected) < 10):
-      if( len(self.station.selected) < 3):
+      if( len(self.station.selected) < 10):
          self.log.normal()
-         # self.log.setText( "   PLEASE SELECT {} SUB-STATIONS   ".format(10-len(self.station.selected)) )
-         self.log.setText( "PLEASE SELECT {} SUB-STATIONS".format(3-len(self.station.selected)) )
+         self.log.setText("PLEASE SELECT {} SUB-STATIONS".format(10-len(self.station.selected)) )
       else:
          self.log.normal()
-         self.log.setText( "PLEASE INPUT MAX SPEED AND GOAL".format(3-len(self.station.selected)) )
+         self.log.setText("PLEASE INPUT MAX SPEED AND GOAL")
          
 
       msi = self.maxSpeedInput.getInput()
@@ -286,7 +298,7 @@ class UserInterface(QWidget):
             if(gssi != ''):
                if(gssi[0] == '-'):
                   self.log.error()
-                  self.log.setText("STATION #  CANNOT BE NEGATIVE")
+                  self.log.setText("STATION # CANNOT BE NEGATIVE")
                   self.goalSingleStation = -1
                else:
                   self.log.error()
@@ -345,7 +357,7 @@ class UserInterface(QWidget):
 
 #-----------------------------------------------------------------------------------------------------------------
 
-      if(len(self.substation) == 3 and self.maxSpeed != -1 and msi != ''):
+      if(len(self.substation) == 10 and self.maxSpeed != -1 and msi != ''):
          self.run.ready = False
          if(self.focusGoal == 1):
             if(self.goalPosition != -1 and gpi != ''):
@@ -366,12 +378,16 @@ class UserInterface(QWidget):
       else:
          self.run.disable()
 
-
       if(self.run.pressed):
          self.run.pressed = False
-         if(self.run.ready):
+         if(self.run.ready and self.mcuStatus == "CONNECT"):
             self.home.disable()
             self.home.ready = False
+            if(self.endEffStatus == "ENABLE"):
+               self.mode_12() # Enable End-Effector
+            elif(self.endEffStatus == "DISABLE"):
+               self.mode_13() # Disable End-Effector
+            
             if(self.focusGoal == 1):
                self.mode_5() # Set Goal Position
             elif(self.focusGoal == 2):
@@ -383,7 +399,7 @@ class UserInterface(QWidget):
 
       if(self.home.pressed):
          self.home.pressed = False
-         if(self.home.ready):
+         if(self.home.ready and self.mcuStatus == "CONNECT"):
             self.mode_14() # Set Home
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -392,11 +408,13 @@ class UserInterface(QWidget):
       if(self.endEffStatus == "DISABLE"):
          self.endEffStatus = "ENABLE"
          self.endEffStatusText.setStyle("color:{}".format(self.color.lightblue))
-         self.mode_12() # Enable End-Effector
+         if(self.mcuStatus == "CONNECT"):
+            self.mode_12() # Enable End-Effector
       else:
          self.endEffStatus = "DISABLE"
          self.endEffStatusText.setStyle("color:gray")
-         self.mode_13() # Disable End-Effector
+         if(self.mcuStatus == "CONNECT"):
+            self.mode_13() # Disable End-Effector
       self.endEffStatusText.setText(self.endEffStatus)
 
    def mcuControl(self):
@@ -410,48 +428,121 @@ class UserInterface(QWidget):
          self.mode_3() # Disconnect MCU
       self.mcuStatusText.setText(self.mcuStatus)
 
+   def checkSum(self,dataFrame):
+      return (~(sum(dataFrame)%256))%256
+
+   def serialWait(self):
+      while(ser.in_waiting == 0):
+         pass
+
    def mode_1(self):
       pass
 
    def mode_2(self):
-      print("Connect MCU")
+      ser.write([146,109]) # 10010010 01101101
+      self.serialWait()
+      if(ser.read(2) == b'Xu'):
+         print("Connect MCU")
 
    def mode_3(self):
-      print("Disconnect MCU")
+      ser.write([147,108]) # 10010011 01101100
+      self.serialWait()
+      if(ser.read(2) == b'Xu'):
+         print("Disconnect MCU")
 
    def mode_4(self):
-      print("Max Speed : ", self.maxSpeed)
-      self.mode_8() # Go to Goal
+      serialList = [148,0] # 10010100 00000000
+      serialList.append(int(float(self.maxSpeed)*255/10)) # 8 bit (0-255)
+      serialList.append(self.checkSum(serialList))
+      ser.write(serialList)
+      self.serialWait()
+      if(ser.read(2) == b'Xu'):
+         print("Max Speed : ", self.maxSpeed)
+         self.mode_8() # Go to Goal
 
    def mode_5(self):
-      print("Goal Position :", self.goalPosition)
+      serialList = [149] # 10010101
+      goalRad = int(float(self.goalPosition)*10000*math.pi/180)
+      serialList.append(int(goalRad / 256)) # 1st 8 bit (0-255)
+      serialList.append(int(goalRad % 256)) # 2nd 8 bit (0-255)
+      serialList.append(self.checkSum(serialList))
+      ser.write(serialList)
+      self.serialWait()
+      if(ser.read(2) == b'Xu'):
+         print("Goal Position :", self.goalPosition)
 
    def mode_6(self):
-      print("Goal Single Station :", self.goalSingleStation)
+      serialList = [150,0] # 10010110 00000000
+      serialList.append(int(self.goalSingleStation)) # 1-10
+      serialList.append(self.checkSum(serialList))
+      self.serialWait()
+      if(ser.read(2) == b'Xu'):
+         print("Goal Single Station :", self.goalSingleStation)
 
    def mode_7(self):
-      print("Goal Multi Station :", self.goalMultiStation[:self.goalMultiStationSize-1])
-
+      serialList = [151] # 10010111 
+      serialList.append(self.goalMultiStationSize-1)
+      for i in range(self.goalMultiStationSize-1):
+         serialList.append(int(self.goalMultiStation[i])) # 1-10
+      serialList.append(self.checkSum(serialList))
+      self.serialWait()
+      if(ser.read(2) == b'Xu'):
+         print("Goal Multi Station :", self.goalMultiStation[:self.goalMultiStationSize-1])
+      
    def mode_8(self):
-      print("Go to Goal\n")
+      ser.write([152,103]) # 10011000 01100111
+      self.serialWait()
+      if(ser.read(2) == b'Xu'):
+         print("RUN!! Go to Goal\n")
+      # self.serialWait()
+      # if(ser.read(2) == b'Fn'):
+      #    print("FINISHED!! Reach Goal\n")
 
    def mode_9(self):
-      pass
+      return
+      ser.write([153,102]) # 10011001 01100110
+      self.serialWait()
+      if(ser.read(2) == b'Xu'):
+         print("Recieved Current Station")
+      self.currentStation = ser.read(4)
+      print(self.currentStation)
+      
 
    def mode_10(self):
-      pass
+      return
+      ser.write([154,101]) # 10011010 01100101
+      self.serialWait()
+      if(ser.read(2) == b'Xu'):
+         print("Recieved Current Angle")
+      self.currentAngle = ser.read(4)
+      print(self.currentAngle)
 
    def mode_11(self):
-      pass
+      return
+      ser.write([155,100]) # 10011011 01100100
+      self.serialWait()
+      if(ser.read(2) == b'Xu'):
+         print("Recieved Current Speed")
+      self.currentSpeed = ser.read(4)
+      print(self.currentSpeed)
 
    def mode_12(self):
-      print("Enable End-Effector")
+      ser.write([156,99]) # 10011100 01100011
+      self.serialWait()
+      if(ser.read(2) == b'Xu'):
+         print("Enable End-Effector")
 
    def mode_13(self):
-      print("Disable End-Effector")
+      ser.write([157,98]) # 10011101 01100010
+      self.serialWait()
+      if(ser.read(2) == b'Xu'):
+         print("Disable End-Effector")
 
    def mode_14(self):
-      print("Set Home")
+      ser.write([158,97]) # 10011110 01100001
+      self.serialWait()
+      if(ser.read(2) == b'Xu'):
+         print("Set Home")
 
 
 if __name__ == '__main__':
