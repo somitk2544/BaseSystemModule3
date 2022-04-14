@@ -9,10 +9,10 @@ import serial
 import math
 
 os = platform.platform()[0].upper()
-if os == 'W': #Windows
-   ser = serial.Serial('COM3',512000,parity='E',stopbits=1,timeout=1)
-elif os == 'M': #Mac
+if os == 'M': #Mac
    ser = serial.Serial('/dev/cu.usbmodem14103', 512000, parity='E', stopbits=1, timeout=1)
+elif os == 'W': #Windows
+   ser = serial.Serial('COM3',512000,parity='E',stopbits=1,timeout=1)
 
 class UserInterface(QWidget):
    def __init__(self):
@@ -38,7 +38,7 @@ class UserInterface(QWidget):
 
       self.background2 = Text(self, 0, '', 475, 0)
       self.background2.setSize(325, 750)
-      self.background2.object.setPixmap(QPixmap("Desktop/BaseSystemModule3/background.png")) 
+      self.background2.object.setPixmap(QPixmap("Desktop/BaseSystemModule3/background.png")) if os == 'M' else self.background2.object.setPixmap(QPixmap("./background.png"))
 
       self.title = Text(self, 28, "         BASE SYSTEM         ", 50, 30)
       self.title.setFontSize(18) if os == 'W' else False
@@ -78,6 +78,7 @@ class UserInterface(QWidget):
       self.maxSpeedText.focus()
       self.maxSpeedText.object.setAlignment(Qt.AlignLeft)
       self.maxSpeedInput = InputBox(self, 15, 645, 68)
+      self.maxSpeedInput.setPosition(635, 68) if os == 'W' else False
       self.maxSpeedInput.setFontSize(9) if os == 'W' else False
       self.maxSpeedInput.setSize(40, 25)
       self.maxSpeedInput.focus()
@@ -180,7 +181,10 @@ class UserInterface(QWidget):
       
       self.arrow = QLabel(self)
       self.arrow.move(40, 230)
-      self.arrowImage = QPixmap("Desktop/BaseSystemModule3/arrow.png")
+      if(os == 'M'):
+         self.arrowImage = QPixmap("Desktop/BaseSystemModule3/arrow.png")
+      elif os == 'W':
+         self.arrowImage = QPixmap("./arrow.png")
       self.arrowImage = self.arrowImage.scaled(390, 390, Qt.KeepAspectRatio)
       self.arrow.setPixmap( self.arrowImage.transformed(QTransform().rotate(0),Qt.SmoothTransformation) )
       self.arrow.setAlignment(Qt.AlignCenter)
@@ -478,6 +482,7 @@ class UserInterface(QWidget):
       serialList = [148,0] # 10010100 00000000
       serialList.append(int(float(self.maxSpeed)*255/10)) # 8 bit (0-255)
       serialList.append(self.checkSum(serialList))
+      print(serialList)
       ser.write(serialList)
       self.serialWait()
       if(ser.read(2) == b'Xu'):
@@ -490,6 +495,7 @@ class UserInterface(QWidget):
       serialList.append(int(goalRad / 256)) # 1st 8 bit (0-255)
       serialList.append(int(goalRad % 256)) # 2nd 8 bit (0-255)
       serialList.append(self.checkSum(serialList))
+      print(serialList)
       ser.write(serialList)
       self.serialWait()
       if(ser.read(2) == b'Xu'):
