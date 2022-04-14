@@ -24,6 +24,9 @@ class Text():
       self.object.move(posX, posY)
       self.object.setAlignment(Qt.AlignCenter)
       self.unfocus()
+
+   def setFontSize(self, fontSize):
+      self.object.setFont(QFont("Arial", fontSize))
       
    def setPosition(self, posX, posY):
       self.object.move(posX, posY)
@@ -61,6 +64,9 @@ class Button():
       self.style = ""
       self.pressed = False
       self.ready = False
+
+   def setFontSize(self, fontSize):
+      self.object.setFont(QFont("Arial", fontSize))
       
    def setPosition(self, posX, posY):
       self.object.move(posX, posY)
@@ -103,6 +109,9 @@ class InputBox():
       self.unfocus()
       self.focused = False
       self.object.focusSignal.connect(self.focus)
+
+   def setFontSize(self, fontSize):
+      self.object.setFont(QFont("Arial", fontSize))
 
    def setPosition(self, posX, posY):
       self.object.move(posX, posY)

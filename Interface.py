@@ -41,24 +41,28 @@ class UserInterface(QWidget):
       self.background2.object.setPixmap(QPixmap("Desktop/BaseSystemModule3/background.png")) 
 
       self.title = Text(self, 28, "         BASE SYSTEM         ", 50, 30)
+      self.title.setFontSize(18) if os == 'W' else False
       self.title.setStyle("color: white; border-radius: 25; background-color: {}; padding: 10px".format(self.color.darkgray))
-
       
       self.logBorder = Text(self, 0, '', 36, 135)
       self.logBorder.setSize(400, 42)
       self.logBorder.setStyle("border-radius: 10; border: 3px solid rgb(0, 0, 150); background-color: rgba(255, 255, 255, 200); padding :5px")
       self.logTag = Text(self, 14, "     MESSAGE     ", 175, 125)
+      self.logTag.setFontSize(8) if os == 'W' else False
       self.logTag.setStyle("color:white; background-color: {}; border-radius: 7; padding :3px".format(self.color.darkblue))
       self.log = Text(self, 15.5, "   PLEASE SELECT 10 SUB-STATIONS   ", 36, 140)
+      self.log.setFontSize(10) if os == 'W' else False
       self.log.setSize(400, 40)
       self.log.normal()
       
       self.run = Button(self, 20, "RUN", 50, 670)
+      self.run.setFontSize(12) if os == 'W' else False
       self.run.setSize(150, 40)
       self.run.setStyle("color:{}; background-color: {}; border-radius: 10; border: 4px solid {}".format(self.color.white, self.color.darkblue, self.color.darkblue))
       self.run.disable()
 
       self.home = Button(self, 20, "HOME", 250, 670)
+      self.home.setFontSize(12) if os == 'W' else False
       self.home.setSize(150, 40)
       self.home.setStyle("color:{}; background-color: {}; border-radius: 10; border: 4px solid {}".format(self.color.white, self.color.lightgray, self.color.lightgray))
       self.home.ready = True
@@ -67,17 +71,22 @@ class UserInterface(QWidget):
       self.speedBorder.setSize(275, 150)
       self.speedBorder.setStyle("border-radius: 15; border: 3px solid white")
       self.speedTag = Text(self, 14, "   SPEED   ", 597, 30)
+      self.speedTag.setFontSize(9) if os == 'W' else False
       self.speedTag.setStyle("color:{}; background-color: white; border-radius: 7; border: 3px solid white".format(self.color.darkblue))
       self.maxSpeedText = Text(self, 15, "MAX SPEED\t\tRPM", 530, 70)
+      self.maxSpeedText.setFontSize(9) if os == 'W' else False
       self.maxSpeedText.focus()
       self.maxSpeedText.object.setAlignment(Qt.AlignLeft)
       self.maxSpeedInput = InputBox(self, 15, 645, 68)
+      self.maxSpeedInput.setFontSize(9) if os == 'W' else False
       self.maxSpeedInput.setSize(40, 25)
       self.maxSpeedInput.focus()
       self.nowSpeedText = Text(self, 15, "NOW SPEED\t0.00\tRPM", 530, 110)
+      self.nowSpeedText.setFontSize(9) if os == 'W' else False
       self.nowSpeedText.object.setAlignment(Qt.AlignLeft)
       self.nowSpeedText.focus()
       self.topSpeedText = Text(self, 15, "TOP SPEED\t0.00\tRPM", 530, 150)
+      self.topSpeedText.setFontSize(9) if os == 'W' else False
       self.topSpeedText.object.setAlignment(Qt.AlignLeft)
       self.topSpeedText.focus()
 
@@ -85,24 +94,33 @@ class UserInterface(QWidget):
       self.goalBorder.setSize(275, 330)
       self.goalBorder.setStyle("border-radius: 15; border: 3px solid white")
       self.goalTag = Text(self, 14, "   GOAL   ", 602, 210)
+      self.goalTag.setFontSize(9) if os == 'W' else False
       self.goalTag.setStyle("color:{}; background-color: white; border-radius: 7; border: 3px solid white".format(self.color.darkblue))
       
       self.goalPositionText = Text(self, 15, "ANGULAR\nPOSITION", 540, 253)
+      self.goalPositionText.setFontSize(9) if os == 'W' else False
       self.goalPositionInput = InputBox(self, 16, 550, 298)
+      self.goalPositionInput.setFontSize(9) if os == 'W' else False
       self.goalPositionInput.setSize(50, 25)
       self.goalDegree = Text(self, 12, "o", 605, 295)
+      self.goalDegree.setFontSize(7) if os == 'W' else False
          
       self.goalSingleStationText = Text(self, 15, "SINGLE\nSTATION", 675, 253)
+      self.goalSingleStationText.setFontSize(9) if os == 'W' else False
       self.goalSingleStationInput = InputBox(self, 18, 700, 298)
+      self.goalSingleStationInput.setFontSize(9) if os == 'W' else False
       self.goalSingleStationInput.setSize(25, 25)
       self.goalSharp = Text(self, 15, "#", 685, 300)
+      self.goalSharp.setFontSize(9) if os == 'W' else False
 
       self.goalMultiStationText = Text(self, 15, "MULTI STATION QUEUE", 552, 370)
+      self.goalMultiStationText.setFontSize(9) if os == 'W' else False
       self.goalMultiStationText.focus()
       self.goalMultiStationInput = []
       for i in range(3):
          for j in range(5):
             self.goalMultiStationInput.append(InputBox(self, 18, 530+48*j, 400+48*i))
+            self.goalMultiStationInput[-1].setFontSize(9) if os == 'W' else False
             self.goalMultiStationInput[-1].setSize(25, 25)
             self.goalMultiStationInput[-1].disable()
       
@@ -128,13 +146,16 @@ class UserInterface(QWidget):
       self.endEffBorder.setStyle("border-radius: 15; border: 3px solid white")
       self.endEffTag = Text(self, 14, "   END-EFFECTOR   ", 567, 570)
       self.endEffTag.setStyle("color:{}; background-color: white; border-radius: 7; border: 3px solid white".format(self.color.darkblue))
+      self.endEffTag.setFontSize(9) if os == 'W' else False
       self.endEffText = Text(self, 16, "STATUS", 530, 605)
       self.endEffText.setStyle("color:white")
+      self.endEffText.setFontSize(9) if os == 'W' else False
       self.endEffToggle = AnimatedToggle(self, checked_color="#44ccff", pulse_checked_color="#0099ccff", pulse_unchecked_color="#00ffffff")
       self.endEffToggle.move(599, 590)
       self.endEffToggle.resize(70, 50)
       self.endEffToggle.toggled.connect(self.endEffControl)
       self.endEffStatusText = Text(self, 16, "DISABLE", 675, 605)
+      self.endEffStatusText.setFontSize(9) if os == 'W' else False
       self.endEffStatusText.setStyle("color:gray")
 
       self.mcuStatus = "DISCONNECT"
@@ -142,10 +163,13 @@ class UserInterface(QWidget):
       self.mcuBorder.setSize(275, 60)
       self.mcuBorder.setStyle("border-radius: 15; border: 3px solid white")
       self.mcuTag = Text(self, 14, "   MCU   ", 604, 660)
+      self.mcuTag.setFontSize(9) if os == 'W' else False
       self.mcuTag.setStyle("color:{}; background-color: white; border-radius: 7; border: 3px solid white".format(self.color.darkblue))
       self.mcuText = Text(self, 16, "STATUS", 530, 695)
+      self.mcuText.setFontSize(9) if os == 'W' else False
       self.mcuText.setStyle("color:white")
       self.mcuStatusText = Text(self, 15, "DISCONNECT", 665, 694)
+      self.mcuStatusText.setFontSize(9) if os == 'W' else False
       self.mcuStatusText.setStyle("color:gray")
       self.mcuStatusText.setSize(100,20)
       self.mcuToggle = AnimatedToggle(self, checked_color="#44ccff", pulse_checked_color="#0099ccff", pulse_unchecked_color="#00ffffff")
