@@ -10,7 +10,7 @@ import math
 
 os = platform.platform()[0].upper()
 if os == 'M': #Mac
-   ser = serial.Serial('/dev/cu.usbmodem14203', 115200, parity='E', stopbits=1, timeout=1)
+   ser = serial.Serial('/dev/cu.usbmodem14103', 512000, parity='E', stopbits=1, timeout=1)
 elif os == 'W': #Windows
    ser = serial.Serial('COM3',512000,parity='E',stopbits=1,timeout=1)
 
