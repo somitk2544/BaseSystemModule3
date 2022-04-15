@@ -10,7 +10,7 @@ import math
 
 os = platform.platform()[0].upper()
 if os == 'M': #Mac
-   ser = serial.Serial('/dev/cu.usbmodem14103', 512000, parity='E', stopbits=1, timeout=1)
+   ser = serial.Serial('/dev/cu.usbmodem14203', 115200, parity='E', stopbits=1, timeout=1)
 elif os == 'W': #Windows
    ser = serial.Serial('COM3',512000,parity='E',stopbits=1,timeout=1)
 
@@ -480,7 +480,7 @@ class UserInterface(QWidget):
 
    def mode_4(self):
       serialList = [148,0] # 10010100 00000000
-      serialList.append(int(float(self.maxSpeed)*255/10)) # 8 bit (0-255)
+      serialList.append(int(float(self.maxSpeed)*255/10)) # 8 bit (0-255) but 255 will equal to 11111111 which is blank (-1)
       serialList.append(self.checkSum(serialList))
       print(serialList)
       ser.write(serialList)
@@ -505,6 +505,7 @@ class UserInterface(QWidget):
       serialList = [150,0] # 10010110 00000000
       serialList.append(int(self.goalSingleStation)) # 1-10
       serialList.append(self.checkSum(serialList))
+      ser.write(serialList)
       self.serialWait()
       if(ser.read(2) == b'Xu'):
          print("Goal Single Station :", self.goalSingleStation)
@@ -515,6 +516,7 @@ class UserInterface(QWidget):
       for i in range(self.goalMultiStationSize-1):
          serialList.append(int(self.goalMultiStation[i])) # 1-10
       serialList.append(self.checkSum(serialList))
+      ser.write(serialList)
       self.serialWait()
       if(ser.read(2) == b'Xu'):
          print("Goal Multi Station :", self.goalMultiStation[:self.goalMultiStationSize-1])
@@ -524,9 +526,9 @@ class UserInterface(QWidget):
       self.serialWait()
       if(ser.read(2) == b'Xu'):
          print("RUN!! Go to Goal\n")
-      # self.serialWait()
-      # if(ser.read(2) == b'Fn'):
-      #    print("FINISHED!! Reach Goal\n")
+      self.serialWait()
+      if(ser.read(2) == b'Fn'):
+         print("FINISHED!! Reach Goal\n")
 
    def mode_9(self):
       return
