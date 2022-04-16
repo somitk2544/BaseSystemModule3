@@ -480,7 +480,7 @@ class UserInterface(QWidget):
 
    def mode_4(self):
       serialList = [148,0] # 10010100 00000000
-      serialList.append(int(float(self.maxSpeed)*255/10)) # 8 bit (0-255) but 255 will equal to 11111111 which is blank (-1)
+      serialList.append(int(float(self.maxSpeed)*255/10)) # 8 bit (0-255)
       serialList.append(self.checkSum(serialList))
       print(serialList)
       ser.write(serialList)
@@ -512,10 +512,20 @@ class UserInterface(QWidget):
 
    def mode_7(self):
       serialList = [151] # 10010111 
-      serialList.append(self.goalMultiStationSize-1)
-      for i in range(self.goalMultiStationSize-1):
-         serialList.append(int(self.goalMultiStation[i])) # 1-10
+      serialSize = self.goalMultiStationSize-1
+      serialStation = self.goalMultiStation[:serialSize].copy()
+      serialList.append(serialSize)
+
+      if(serialSize % 2 == 1):
+         serialStation.append(0)
+         serialSize += 1
+
+      for i in range(0,serialSize,2):
+         serialList.append(int(serialStation[i+1])*16 + int(serialStation[i]))  # 0-10,  0-10  
+
       serialList.append(self.checkSum(serialList))
+      print(serialStation)
+      print(serialList)
       ser.write(serialList)
       self.serialWait()
       if(ser.read(2) == b'Xu'):
