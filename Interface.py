@@ -415,6 +415,8 @@ class UserInterface(QWidget):
                self.mode_12() # Enable End-Effector
             elif(self.endEffStatus == "DISABLE"):
                self.mode_13() # Disable End-Effector
+
+            self.mode_4() # Set Max Speed
             
             if(self.focusGoal == 1):
                self.mode_5() # Set Goal Position
@@ -423,7 +425,7 @@ class UserInterface(QWidget):
             elif(self.focusGoal == 3):
                self.mode_7() # Set Goal Multi Station
 
-            self.mode_4() # Set Max Speed
+            self.mode_8() # Go to Goal
 
       if(self.home.pressed):
          self.home.pressed = False
@@ -482,12 +484,11 @@ class UserInterface(QWidget):
       serialList = [148,0] # 10010100 00000000
       serialList.append(int(float(self.maxSpeed)*255/10)) # 8 bit (0-255)
       serialList.append(self.checkSum(serialList))
-      print(serialList)
+      # print(serialList)
       ser.write(serialList)
       self.serialWait()
       if(ser.read(2) == b'Xu'):
          print("Max Speed : ", self.maxSpeed)
-         self.mode_8() # Go to Goal
 
    def mode_5(self):
       serialList = [149] # 10010101
@@ -495,7 +496,7 @@ class UserInterface(QWidget):
       serialList.append(int(goalRad / 256)) # 1st 8 bit (0-255)
       serialList.append(int(goalRad % 256)) # 2nd 8 bit (0-255)
       serialList.append(self.checkSum(serialList))
-      print(serialList)
+      # print(serialList)
       ser.write(serialList)
       self.serialWait()
       if(ser.read(2) == b'Xu'):
@@ -505,6 +506,7 @@ class UserInterface(QWidget):
       serialList = [150,0] # 10010110 00000000
       serialList.append(int(self.goalSingleStation)) # 1-10
       serialList.append(self.checkSum(serialList))
+      # print(serialList)
       ser.write(serialList)
       self.serialWait()
       if(ser.read(2) == b'Xu'):
@@ -535,7 +537,7 @@ class UserInterface(QWidget):
       ser.write([152,103]) # 10011000 01100111
       self.serialWait()
       if(ser.read(2) == b'Xu'):
-         print("RUN!! Go to Goal\n")
+         print("RUN!! Go to Goal")
       self.serialWait()
       if(ser.read(2) == b'Fn'):
          print("FINISHED!! Reach Goal\n")
