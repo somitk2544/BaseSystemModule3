@@ -334,7 +334,7 @@ class UserInterface(QWidget):
                   self.goalSingleStation = -1
       # print(self.goalSingleStation)
 
-      for i in range(self.goalMultiStationSize):
+      for i in range(min(self.goalMultiStationSize, 15)):
          gmsi = self.goalMultiStationInput[i].getInput()
          if(self.focusGoal == 3):
             if(gmsi.isdigit()):
@@ -526,8 +526,8 @@ class UserInterface(QWidget):
          serialList.append(int(serialStation[i+1])*16 + int(serialStation[i]))  # 0-10,  0-10  
 
       serialList.append(self.checkSum(serialList))
-      print(serialStation)
-      print(serialList)
+      # print(serialStation)
+      # print(serialList)
       ser.write(serialList)
       self.serialWait()
       if(ser.read(2) == b'Xu'):
