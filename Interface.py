@@ -21,10 +21,14 @@ class UserInterface(QWidget):
       elif self.os == 'W': #Windows
          self.ser = serial.Serial('COM3',512000,parity='E',stopbits=1,timeout=1)
 
+      self.multiStationAmount = 10 # Can be changed to 0 if you don't want to select substations
+      
       self.currentStation = 0
       self.currentAngle = 0
       self.currentSpeed = 0
+      self.topSpeed = 0
       self.running = False
+      self.homing  = False
 
       self.substation = []
       self.maxSpeed = -1
@@ -103,7 +107,7 @@ class UserInterface(QWidget):
       
       self.goalPositionText = Text(self, 15, "ANGULAR\nPOSITION", 540, 253)
       self.goalPositionText.setFontSize(9) if self.os == 'W' else False
-      self.goalPositionInput = InputBox(self, 16, 550, 298)
+      self.goalPositionInput = InputBox(self, 15, 550, 298)
       self.goalPositionInput.setFontSize(9) if self.os == 'W' else False
       self.goalPositionInput.setSize(50, 25)
       self.goalDegree = Text(self, 12, "o", 605, 295)
@@ -213,7 +217,6 @@ class UserInterface(QWidget):
       self.color = Color()
 
    def showTime(self):
-      # self.currentAngle += 1
       self.arrow.setPixmap( self.arrowImage.transformed(QTransform().rotate(self.currentAngle),Qt.SmoothTransformation) )
 
       focusMultiStationInput = False
@@ -260,15 +263,12 @@ class UserInterface(QWidget):
 
       self.log.normal()
       self.substation = self.station.selected
-
-      # if( len(self.station.selected) < 10):
-      if( len(self.station.selected) < 0):
+      if( len(self.station.selected) < self.multiStationAmount):
          self.log.normal()
          self.log.setText("PLEASE SELECT {} SUB-STATIONS".format(10-len(self.station.selected)) )
       else:
          self.log.normal()
          self.log.setText("PLEASE INPUT MAX SPEED AND GOAL")
-         
 
       msi = self.maxSpeedInput.getInput()
       if(msi.replace('.','',1).isdigit()):
@@ -386,9 +386,8 @@ class UserInterface(QWidget):
 
 
 #-----------------------------------------------------------------------------------------------------------------
-
-      # if(len(self.substation) == 10 and self.maxSpeed != -1 and msi != ''):
-      if(len(self.substation) == 0 and self.maxSpeed != -1 and msi != ''):
+      
+      if(len(self.substation) == self.multiStationAmount and self.maxSpeed != -1 and msi != ''):
          self.run.ready = False
          if(self.focusGoal == 1):
             if(self.goalPosition != -1 and gpi != ''):
@@ -402,18 +401,35 @@ class UserInterface(QWidget):
       else:
          self.run.ready = False
 
+      if(self.mcuStatus == "DISCONNECT"):
+         self.home.disable()
+         self.home.ready = False
+         self.run.disable()
+         self.run.ready = False
+      else:
+         self.home.ready = True
+         self.home.enable()
+
       if(self.run.ready):
          self.log.normal()
          self.log.setText("READY TO RUN")
          self.run.enable()
       else:
          self.run.disable()
+         if(self.mcuStatus == "DISCONNECT"):
+            self.log.normal()
+            self.log.setText("PLEASE CONNECT MCU FIRST")
+
+      if(self.running):
+            self.home.disable()
+            self.home.ready = False
+      elif(self.homing):
+         self.run.disable()
+         self.run.ready = False
 
       if(self.run.pressed):
          self.run.pressed = False
-         if(self.run.ready and self.mcuStatus == "CONNECT"):
-            self.home.disable()
-            self.home.ready = False
+         if(self.run.ready):
             if(self.endEffStatus == "ENABLE"):
                self.mode_12() # Enable End-Effector
             elif(self.endEffStatus == "DISABLE"):
@@ -429,17 +445,31 @@ class UserInterface(QWidget):
                self.mode_6() # Set Goal Single Station
             elif(self.focusGoal == 3):
                self.mode_7() # Set Goal Multi Station
-
+            
             time.sleep(0.01)
             self.mode_8() # Go to Goal
 
       if(self.home.pressed):
          self.home.pressed = False
-         if(self.home.ready and self.mcuStatus == "CONNECT"):
+         if(self.home.ready):
             self.mode_14() # Set Home
 
-      if(self.running):
-         self.mode_10()
+      if(self.running or self.homing):
+         self.mode_9()  # Request Current Station
+         self.mode_10() # Request Current Angle
+         self.mode_11() # Request Current Speed
+         self.nowSpeedText.setText( "NOW SPEED\t{}\tRPM".format(round(self.currentSpeed,2)) )
+         if(self.currentSpeed > self.topSpeed):
+            self.topSpeed = self.currentSpeed
+            self.topSpeedText.setText("TOP SPEED\t{}\tRPM".format(round(self.topSpeed,2)) )
+         if(self.homing):
+            if(self.currentAngle == 0):
+               self.homing = False
+               print("FINISHED!! Reach Home\n")
+      else:
+         self.topSpeed = 0
+         self.topSpeedText.setText( "TOP SPEED\t0.00\tRPM" )
+         self.nowSpeedText.setText( "NOW SPEED\t0.00\tRPM" )
 
 #-----------------------------------------------------------------------------------------------------------------
 
@@ -535,7 +565,6 @@ class UserInterface(QWidget):
          serialList.append(int(serialStation[i+1])*16 + int(serialStation[i]))  # 0-10,  0-10  
 
       serialList.append(self.checkSum(serialList))
-      # print(serialStation)
       # print(serialList)
       self.ser.write(serialList)
       self.serialWait()
@@ -550,13 +579,31 @@ class UserInterface(QWidget):
       self.running = True
 
    def mode_9(self):
-      return
-      ser.write([153,102]) # 10011001 01100110
+      self.ser.write([153,102]) # 10011001 01100110
       self.serialWait()
-      if(ser.read(2) == b'Xu'):
-         print("Recieved Current Station")
-      self.currentStation = ser.read(4)
-      print(self.currentStation)
+      serialRead = self.ser.read(2)
+      if(serialRead == b'Xu'):
+         serialList = []
+         for i in range(4):
+            serialList.append(int.from_bytes(self.ser.read(1), byteorder='big'))
+         if( self.checkSum(serialList[:-1]) == serialList[-1] and serialList[0] == 153):
+            self.currentStation = serialList[2]
+            # print(self.currentStation)
+         self.ser.write([88,117]) # Xu
+
+      elif(serialRead == b'Fn'):
+         self.running = False
+         print("FINISHED!! Reach Goal\n")
+         self.serialWait()
+         serialRead = self.ser.read(2)
+         if(serialRead == b'Xu'):
+            serialList = []
+            for i in range(4):
+               serialList.append(int.from_bytes(self.ser.read(1), byteorder='big'))
+            if( self.checkSum(serialList[:-1]) == serialList[-1] and serialList[0] == 153):
+               self.currentStation = serialList[2]
+               # print(self.currentStation)
+            self.ser.write([88,117]) # Xu
 
    def mode_10(self):
       self.ser.write([154,101]) # 10011010 01100101
@@ -569,7 +616,7 @@ class UserInterface(QWidget):
          if( self.checkSum(serialList[:-1]) == serialList[-1] and serialList[0] == 154):
             self.currentAngle = serialList[1]*256 + serialList[2]
             self.currentAngle = self.currentAngle / (math.pi * 10000) * 180
-            print(self.currentAngle)
+            # print(self.currentAngle)
          self.ser.write([88,117]) # Xu
 
       elif(serialRead == b'Fn'):
@@ -584,17 +631,35 @@ class UserInterface(QWidget):
             if(self.checkSum(serialList[:-1]) == serialList[-1]):
                self.currentAngle = serialList[1]*256 + serialList[2]
                self.currentAngle = self.currentAngle / (math.pi * 10000) * 180
-               print(self.currentAngle)
+               # print(self.currentAngle)
             self.ser.write([88,117]) # Xu
 
    def mode_11(self):
-      return
-      ser.write([155,100]) # 10011011 01100100
+      self.ser.write([155,100]) # 10011011 01100100
       self.serialWait()
-      if(ser.read(2) == b'Xu'):
-         print("Recieved Current Speed")
-      self.currentSpeed = ser.read(4)
-      print(self.currentSpeed)
+      serialRead = self.ser.read(2)
+      if(serialRead == b'Xu'):
+         serialList = []
+         for i in range(4):
+            serialList.append(int.from_bytes(self.ser.read(1), byteorder='big'))
+         if( self.checkSum(serialList[:-1]) == serialList[-1] and serialList[0] == 155):
+            self.currentSpeed = serialList[2] * 10 / 255
+            # print(self.currentSpeed)
+         self.ser.write([88,117]) # Xu
+
+      elif(serialRead == b'Fn'):
+         self.running = False
+         print("FINISHED!! Reach Goal\n")
+         self.serialWait()
+         serialRead = self.ser.read(2)
+         if(serialRead == b'Xu'):
+            serialList = []
+            for i in range(4):
+               serialList.append(int.from_bytes(self.ser.read(1), byteorder='big'))
+            if( self.checkSum(serialList[:-1]) == serialList[-1] and serialList[0] == 155):
+               self.currentSpeed = serialList[2] * 10 / 255
+               # print(self.currentSpeed)
+            self.ser.write([88,117]) # Xu
 
    def mode_12(self):
       self.ser.write([156,99]) # 10011100 01100011
@@ -613,6 +678,7 @@ class UserInterface(QWidget):
       self.serialWait()
       if(self.ser.read(2) == b'Xu'):
          print("Set Home")
+      self.homing = True
 
 
 if __name__ == '__main__':
