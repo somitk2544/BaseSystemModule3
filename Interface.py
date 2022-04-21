@@ -7,6 +7,7 @@ from qtwidgets import AnimatedToggle
 import platform
 import serial
 import math
+import time
 
 os = platform.platform()[0].upper()
 if os == 'M': #Mac
@@ -22,6 +23,7 @@ class UserInterface(QWidget):
       self.currentStation = 0
       self.currentAngle = 0
       self.currentSpeed = 0
+      self.running = False
 
       self.substation = []
       self.maxSpeed = -1
@@ -260,7 +262,8 @@ class UserInterface(QWidget):
 
       self.substation = self.station.selected
 
-      if( len(self.station.selected) < 10):
+      # if( len(self.station.selected) < 10):
+      if( len(self.station.selected) < 0):
          self.log.normal()
          self.log.setText("PLEASE SELECT {} SUB-STATIONS".format(10-len(self.station.selected)) )
       else:
@@ -385,7 +388,8 @@ class UserInterface(QWidget):
 
 #-----------------------------------------------------------------------------------------------------------------
 
-      if(len(self.substation) == 10 and self.maxSpeed != -1 and msi != ''):
+      # if(len(self.substation) == 10 and self.maxSpeed != -1 and msi != ''):
+      if(len(self.substation) == 0 and self.maxSpeed != -1 and msi != ''):
          self.run.ready = False
          if(self.focusGoal == 1):
             if(self.goalPosition != -1 and gpi != ''):
@@ -415,9 +419,11 @@ class UserInterface(QWidget):
                self.mode_12() # Enable End-Effector
             elif(self.endEffStatus == "DISABLE"):
                self.mode_13() # Disable End-Effector
-
+            
+            time.sleep(0.01)
             self.mode_4() # Set Max Speed
             
+            time.sleep(0.01)
             if(self.focusGoal == 1):
                self.mode_5() # Set Goal Position
             elif(self.focusGoal == 2):
@@ -425,12 +431,20 @@ class UserInterface(QWidget):
             elif(self.focusGoal == 3):
                self.mode_7() # Set Goal Multi Station
 
+            time.sleep(0.01)
             self.mode_8() # Go to Goal
 
       if(self.home.pressed):
          self.home.pressed = False
          if(self.home.ready and self.mcuStatus == "CONNECT"):
             self.mode_14() # Set Home
+
+      if(self.running):
+         self.mode_10()
+         # if(ser.in_waiting != 0):
+         #    if(ser.read(2) == b'Fn'):
+         #       self.running = False
+         #       print("FINISHED!! Reach Goal\n")
 
 #-----------------------------------------------------------------------------------------------------------------
 
@@ -492,7 +506,7 @@ class UserInterface(QWidget):
 
    def mode_5(self):
       serialList = [149] # 10010101
-      goalRad = int(float(self.goalPosition)*10000*math.pi/180)
+      goalRad = float(self.goalPosition)*10000*math.pi/180
       serialList.append(int(goalRad / 256)) # 1st 8 bit (0-255)
       serialList.append(int(goalRad % 256)) # 2nd 8 bit (0-255)
       serialList.append(self.checkSum(serialList))
@@ -538,9 +552,7 @@ class UserInterface(QWidget):
       self.serialWait()
       if(ser.read(2) == b'Xu'):
          print("RUN!! Go to Goal")
-      self.serialWait()
-      if(ser.read(2) == b'Fn'):
-         print("FINISHED!! Reach Goal\n")
+      self.running = True
 
    def mode_9(self):
       return
@@ -550,16 +562,35 @@ class UserInterface(QWidget):
          print("Recieved Current Station")
       self.currentStation = ser.read(4)
       print(self.currentStation)
-      
 
    def mode_10(self):
-      return
       ser.write([154,101]) # 10011010 01100101
       self.serialWait()
-      if(ser.read(2) == b'Xu'):
-         print("Recieved Current Angle")
-      self.currentAngle = ser.read(4)
-      print(self.currentAngle)
+      serialRead = ser.read(2)
+      if(serialRead == b'Xu'):
+         serialList = []
+         for i in range(4):
+            serialList.append(int.from_bytes(ser.read(1), byteorder='big'))
+         if( self.checkSum(serialList[:-1]) == serialList[-1] and serialList[0] == 154):
+            self.currentAngle = serialList[1]*256 + serialList[2]
+            self.currentAngle = self.currentAngle / 31414 * 180
+            print(self.currentAngle)
+         ser.write([88,117]) # Xu
+
+      elif(serialRead == b'Fn'):
+         self.running = False
+         print("FINISHED!! Reach Goal\n")
+         self.serialWait()
+         serialRead = ser.read(2)
+         if(serialRead == b'Xu'):
+            serialList = []
+            for i in range(4):
+               serialList.append(int.from_bytes(ser.read(1), byteorder='big'))
+            if(self.checkSum(serialList[:-1]) == serialList[-1]):
+               self.currentAngle = serialList[1]*256 + serialList[2]
+               self.currentAngle = self.currentAngle / 31414 * 180
+               print(self.currentAngle)
+            ser.write([88,117]) # Xu
 
    def mode_11(self):
       return
