@@ -19,7 +19,7 @@ class UserInterface(QWidget):
       if self.os == 'M': #Mac
          self.ser = serial.Serial('/dev/cu.usbmodem14103', 512000, parity='E', stopbits=1, timeout=1)
       elif self.os == 'W': #Windows
-         self.ser = serial.Serial('COM3',512000,parity='E',stopbits=1,timeout=1)
+         self.ser = serial.Serial('COM3',512000,parity='E',stopbits=1,timeout=1) ######################################  change port COM
 
       self.multiStationAmount = 10 # Can be changed to 0 if you don't want to select substations
       
